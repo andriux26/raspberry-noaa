@@ -3,7 +3,7 @@
 ## Background
 Historically RN2 used the ```rtl_fm``` code installed as part of the rtl-sdr card driver set to receive  the NOAA APT radio transmissions and capture them as audio wav files. These wav files are subsquently processed by demodulators such as wxtoimg and others to render the final images.
 
-While this has been extremely simple and reliable (since the rtl_fm application is specific to the rtl-sdr cards and since this code is closed-source and proprietary) there has been no way to add other SDR hardware into Raspberry-NOAA-v2 (RN2) workflow without creating significant downstream reengineering requirements.
+While this has been extremely simple and reliable (since the rtl_fm application is specific to the rtl-sdr cards and since this code is closed-source and proprietary) there has been no way to add other SDR hardware into Raspberry-NOAA (RN2) workflow without creating significant downstream reengineering requirements.
 
 Since the release of RN2 we have supported Meteor M2 capture and decoding via either ```rtl_fm``` or ```gnuradio``` via control in the settings.
 
@@ -25,7 +25,7 @@ Ultimately for most rtl-sdr users little will change regardless of which setting
 ## Developing new hardware hooks with gnuradio
 For those who want to try to experiment with other hardware this is a little more information about how you can experiement in gnuradio Composer and create workable ```.py``` scripts that can be used with RN2.
 
-The first thing to explore is the ```raspberry-noaa-v2/scripts/audio_processors/``` folder.
+The first thing to explore is the ```raspberry-noaa/scripts/audio_processors/``` folder.
 
 In this folder you will see the following files:
 

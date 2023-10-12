@@ -30,7 +30,7 @@ class hackrf_noaa_apt_rx(gr.top_block):
         gr.top_block.__init__(self, "HackRF NOAA APT Receiver V1.0.0")
 
         ###############################################################
-        # Variables - added for Raspberry-Noaa-V2 manually after export
+        # Variables - added for Raspberry-Noaa manually after export
         ###############################################################
 
         # get some variables in place for inputs

@@ -28,7 +28,7 @@ class rtlsdr_m2_lrpt_rx(gr.top_block):
         gr.top_block.__init__(self, "Meteor QPSK LRPT")
 
         ###############################################################
-        # Variables - added for Raspberry-Noaa-V2 manually after export
+        # Variables - added for Raspberry-Noaa manually after export
         ###############################################################
 
         # get some variables in place for inputs
