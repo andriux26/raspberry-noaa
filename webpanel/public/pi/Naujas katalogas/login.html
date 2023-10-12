@@ -1,0 +1,125 @@
+<html>
+    <head>
+        <title>m.r.w. login</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <style>
+            body {
+                -webkit-font-smoothing: antialiased;
+                margin: 0px 20px;
+                font-family: arial;
+                font-size: 20px;
+                color: #3a45c5;
+                -webkit-hyphens: auto;
+                -moz-hyphens: auto;
+                -ms-hyphens: auto;
+                hyphens: auto;
+            }
+            h1 {
+                font-size: 2em;
+                padding: 0;
+                margin: .5em 0;
+            }
+            h2 {
+                display: inline;
+                margin: 0;
+                padding: 0;
+                font-size: 1.5em;
+            }
+            a {
+                color: #3a45c5;
+            }
+            .date {
+                display: block;
+                display: none;
+                font-size: .75em;
+            }
+            .emoji {
+                vertical-align: top;
+            }
+            #top-bar {
+                font-size: 16px;
+                border-bottom: 1px solid #3a45c5;
+                overflow: hidden;
+                padding: 20px 0 10px 0;
+                background: white;
+            }
+            #top-bar span {
+            }
+            #top-bar .left {
+                float: left;
+            }
+            #top-bar .right {
+                float: right;
+            }
+            #main {
+                text-align: center;
+                margin: 0 auto;
+                max-width: 800px;
+                background: white;
+            }
+            form {
+                display: inline-block;
+                text-align: left;
+            }
+            form .form-row {
+                margin: 1em;
+            }
+            label {
+                display: inline-block;
+                width: 100px;
+            }
+            @media (max-width: 800px) {
+                body {
+                    font-size: 18px;
+                    margin: 0px 10px;
+                }
+                .main-image {
+                    max-width: 200px;
+                    margin-right: 10px;
+                }
+            }
+        </style>
+        <script>
+            var _gaq = _gaq || [];
+
+            _gaq.push(['_setAccount', 'UA-32796478-1']);
+            _gaq.push(['_trackPageview']);
+
+            (function() {
+                var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
+        </script>
+    </head>
+    <body>
+        <div id="top-bar">
+            <div class="left">
+                <a href="/">Matthew Rayfield World</a> <span class="emoji">🌎</span>
+            </div>
+        </div>
+
+        <div id="main">
+            <form>
+                <h1>Denizen Login</h1>
+
+                <div class="form-row">
+                    <label>Email</label>
+                    <input type="email" />
+                </div>
+
+                <div class="form-row">
+                    <label>Password</label>
+                    <input type="password" />
+                </div>
+
+                <div class="form-row">
+                    <input type="submit" value="Login" />
+                    <span class="emoji" style="float:right">🏡</span>
+                </div>
+            </form>
+        </div>
+    </body>
+</html>

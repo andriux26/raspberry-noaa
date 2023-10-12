@@ -1,0 +1,137 @@
+<title>svg korekcija</title>
+<style>
+    body {
+        text-align: center;
+        font-family: "Comic Sans MS", cursive, sans-serif;
+    }
+    #download-box {
+        margin-bottom: 20px;
+    }
+    #download {
+        font-size: 30px;
+        display: none;
+    }
+    #original, #modified {
+        display: none;
+    }
+    #original-image, #modified-image {
+        width: 45%;
+    }
+</style>
+<script>
+    var statusSpan,
+        controls,
+        fileInput,
+        distInput,
+        download,
+        original,
+        modified,
+        originalImage,
+        modifiedImage;
+
+    function modify() {
+        var svg = document.querySelector('#modified svg'),
+            attributes,
+            i,
+            lineCount = 0,
+            pathCount = 0;
+
+        document.querySelectorAll('#modified line').forEach(function (line) {
+            var x1 = line.getAttribute('x1'),
+                y1 = line.getAttribute('y1'),
+                x2 = line.getAttribute('x2'),
+                y2 = line.getAttribute('y2');
+
+            if (!x1) {lineCount ++; line.setAttribute('x1', '0');}
+            if (!y1) {lineCount ++; line.setAttribute('y1', '0');}
+            if (!x2) {lineCount ++; line.setAttribute('x2', '0');}
+            if (!y2) {lineCount ++; line.setAttribute('y2', '0');}
+        });
+
+        document.querySelectorAll('#modified path').forEach(function (path) {
+            var l = 0,
+                totalLength,
+                point,
+                points = [],
+                poly,
+                attributes,
+                i,
+                dist = parseFloat(distInput.value);
+
+            totalLength = path.getTotalLength();
+
+            while (l < totalLength) {
+                point = path.getPointAtLength(l);
+                points.push(point.x.toFixed(2) +' '+ point.y.toFixed(2));
+                l += dist;
+            }
+
+            poly = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+            poly.setAttribute('points', points.join(' '));
+
+            attributes = path.attributes;
+            for(i = 0; i < attributes.length; i++) {
+                poly.setAttribute(attributes[i].name, attributes[i].value);
+            }
+
+            path.parentNode.appendChild(poly);
+            path.parentNode.removeChild(path);
+
+            pathCount ++;
+        });
+
+        download.href = 'data:image/svg+xml;base64,' + btoa(modified.innerHTML);
+        download.download = Date.now() + '.svg';
+        download.style.display = 'inline';
+
+        modifiedImage.src = 'data:image/svg+xml;base64,' + btoa(modified.innerHTML);
+
+        statusSpan.innerHTML = 'koreguota '+lineCount+' linija/linijos & konvertuota '+pathCount+' pataisimu ;]';
+
+        controls.style.display = 'none';
+    }
+
+    window.onload = function () {
+        statusSpan = document.getElementById('status');
+        controls = document.getElementById('controls');
+        fileInput = document.getElementById('file-input');
+        distInput = document.getElementById('dist-input');
+        download = document.getElementById('download');
+        original = document.getElementById('original');
+        modified = document.getElementById('modified');
+        originalImage = document.getElementById('original-image');
+        modifiedImage = document.getElementById('modified-image');
+
+        fileInput.addEventListener('change', function (event) {
+            var files = event.target.files,
+                fileReader = new FileReader();
+
+            fileInput.style.display = 'none';
+
+            fileReader.onload = function () {
+                original.innerHTML = fileReader.result;
+                modified.innerHTML = fileReader.result;
+
+                originalImage.src = 'data:image/svg+xml;base64,' + btoa(original.innerHTML);
+
+                modify();
+            }
+
+            fileReader.readAsText(files[0]);
+        });
+    };
+</script>
+<h2><a href="http://matthewrayfield.com"></a></h2>
+<h1>svg korekcija</h1>
+<div id="status"></div>
+<div id="download-box"><a id="download">Atsiusti</a></div>
+<div id="controls">
+    <span>svg:</span>
+    <input id="file-input" type="file" />
+    <span>tarpai liniju:</span>
+    <input id="dist-input" type="number" value='5' />
+</div>
+<div id="original"></div>
+<div id="modified"></div>
+<img id="original-image" />
+<img id="modified-image" />

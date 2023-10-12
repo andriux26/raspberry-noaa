@@ -1,0 +1,24 @@
+<ul class="nav nav-tabs">
+  <li class=nav-item">
+    <a class="nav-link {% if admin_action == 'passes' %}active" aria-current="page{% endif %}" href="/admin/passes">{{ lang['passes'] }}</a>
+  </li>
+  <li class=nav-item">
+    <a class="nav-link {% if admin_action == 'captures' %}active" aria-current="page{% endif %}" href="/admin/captures">{{ lang['captures'] }}</a>
+  <li class=nav-item">
+    <a class="nav-link {% if admin_action == 'nustatymai' %}active" aria-current="page{% endif %}" href="/m2.php">{{ lang['m2'] }}</a>
+  </li>
+  <li class=nav-item">
+    <a class="nav-link {% if admin_action == 'LOG' %}active" aria-current="page{% endif %}" href="/log.php">{{ lang['log'] }}</a>
+  </li>
+  <li class=nav-item">
+    <a class="nav-link {% if admin_action == 'M2/TEMP' %}active" aria-current="page{% endif %}" href="/hdd.php">{{ lang['M2/TEMP'] }}</a>
+  </li>
+<li class=nav-item">
+    <a class="nav-link {% if admin_action == 'Antivirus Log' %}active" aria-current="page{% endif %}" href="/virus.php">{{ lang['Antivirus Log'] }}</a>
+  </li>
+<li class=nav-item">
+    <a class="nav-link {% if admin_action == 'Wicardd Log' %}active" aria-current="page{% endif %}" href="/wicardd.php">{{ lang['Wicardd Log'] }}</a>
+  </li>
+
+
+</ul>

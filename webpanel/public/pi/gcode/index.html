@@ -1,0 +1,561 @@
+<html>
+    <head>
+        <title>Pixels to Gcode</title>
+        <link href="../../fonts.googleapis.com/css.css" rel="stylesheet">
+        <style>
+            body {
+                margin: 0;
+                font: 18px 'Kosugi Maru', arial;
+                background: #ffff55;
+                color: #111;
+            }
+            #title-box {
+                text-align: center;
+                background: white;
+                padding: 20px 0 50px 0;
+                border-bottom: 3px double black;
+            }
+            h1, h2, h3 {
+                font-family: 'Kosugi Maru', arial;
+                padding: 0;
+                margin: 10px;
+            }
+            .version {
+                font-size: .4em;
+            }
+            #file-input {
+                border: none;
+            }
+            #image-box {
+                position: fixed;
+                top: 0;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                align-content: center;
+                top: 0;
+                width: 100%;
+                max-height: 70%;
+                overflow: auto;
+                background: white;
+                padding: 30px 0;
+                border-bottom: 3px double black;
+            }
+            #image-a, #image-b {
+                margin: auto 0;
+            }
+            #controls-wrapper {
+                width: 100%;
+                text-align: center;
+                overflow: auto;
+            }
+            #controls-box {
+                padding-top: 30px;
+                display: inline-block;
+                width: 600px;
+                text-align: left;
+            }
+            .input-row {
+                display: flex;
+                justify-content: space-between;
+                border-bottom: 1px solid black;
+                margin-top: .5em;
+            }
+            label {
+                margin-right: 1em;
+            }
+            input {
+                font: 18px monospace;
+                border: 1px solid black;
+                border-bottom: none;
+            }
+            input.small {
+                width: 4em;
+            }
+            button {
+                font: 18px monospace;
+                margin-top: .5em;
+                border: 3px double black;
+            }
+            textarea {
+                margin-top: .3em;
+                font: 14px monospace;
+                display: block;
+                width: 100%;
+                min-height: 5em;
+                border: 1px solid black;
+            }
+            .input-row.bottom {
+                border: none;
+                display: block;
+            }
+            #footer {
+                margin-top: 30px;
+                margin-bottom: 30px;
+                text-align: center;
+            }
+            a {
+                color: blue;
+            }
+        </style>
+        <script src="download.js"></script>
+        <script src="jscolor.js"></script>
+        <script src="convert.js"></script>
+        <script src="diff.js"></script>
+        <script>
+            var canvas,
+                context,
+                image,
+                width, height,
+                data,
+                imageA,
+                imageB,
+
+                printWidth = 0,
+                printHeight = 0,
+            
+                offsetX = 50,
+                offsetY = 50,
+                zUp = 4,
+                zDown = 1,
+                feedrate = 10000,
+                dotGap = 1,
+                dotWidth, dotHeight,
+                scale = 1,
+                colorCount = 1,
+                startingGcode = 'G28 ;Home\nG0 Z4 ;Move to up position\nG4 P20000 ;Pause 20 seconds\n',
+
+                targetColors = [[0,0,0,.5,.8]],
+                colorControls = [],
+
+                ditherPattern = [
+                        [.000,.498,.122,.624,.027,.498,.153,.655],
+                        [.749,.247,.875,.373,.780,.278,.906,.404],
+                        [.184,.686,.059,.561,.216,.718,.090,.592],
+                        [.937,.435,.812,.310,.969,.467,.843,.341],
+                        [.043,.545,.169,.671,.012,.514,.137,.639],
+                        [.796,.294,.922,.420,.765,.263,.890,.388],
+                        [.231,.733,.106,.608,.200,.702,.075,.576],
+                        [.984,.482,.859,.357,.953,.451,.827,.325]
+                    ],
+    
+                titleBox, imageBox, controlsBox,
+                fileInput,
+                controlsBox,
+                printWidthInput, printHeightInput,
+                offsetXInput, offsetYInput,
+                zUpInput, zDownInput,
+                feedrateInput,
+                dotGapInput, colorCountInput,
+                colorsBox,
+                startGcodeTextarea;
+
+            function extend(target, source) {
+                var key;
+
+                for (key in source) {
+                    target[key] = source[key];
+                }
+
+                return target;
+            }
+
+            function createElement(tagName, properties, children) {
+                var element = document.createElement(tagName),
+                    key;
+
+                extend(element, properties);
+
+                if (children) {
+                    children.forEach(function (child) {
+                        element.appendChild(child);
+                    });
+                }
+
+                return element;
+            }
+
+            function calculateDistance(a, b) {
+                var labA, labB;
+
+                labA = rgb_to_lab({R: a[0]*255, G: a[1]*255, B: a[2]*255});
+                labB = rgb_to_lab({R: b[0]*255, G: b[1]*255, B: b[2]*255});
+                
+                return ciede2000(labA, labB) / 100;
+
+                /*return Math.sqrt(
+                        Math.pow(b[0] - a[0], 2) +
+                        Math.pow(b[1] - a[1], 2) +
+                        Math.pow(b[2] - a[2], 2)
+                    );*/
+            }
+
+            function colorToString(color) {
+                return 'rgb('+
+                    Math.round(color[0]*255) + ',' +
+                    Math.round(color[1]*255) + ',' +
+                    Math.round(color[2]*255) +
+                    ')';
+            }
+
+            function addColorControl() {
+                var i = colorControls.length,
+                    color = targetColors[i],
+                    
+                    colorInput = createElement('input', {id: 'color-'+i}),
+                    colorLabel = createElement('label', {htmlFor: 'color-'+i, innerHTML: 'Spalva ' + (i+1) + ': '}),
+                    picker = new jscolor(colorInput),
+                    colorRow = createElement('div', {className: 'input-row'}, [colorLabel, colorInput]),
+
+                    thresholdInput = createElement('input', {id: 'threshold-'+i, value: ".50", type: 'number'}),
+                    thresholdRange = createElement('input', {type: 'range', min: 0, max: 1.1, step: .01, value: .5}),
+                    thresholdLabel = createElement('label', {htmlFor: 'threshold-'+i, innerHTML: 'Spalvos korekcija ' + (i+1) + ': '}),
+                    thresholdRow = createElement('div', {className: 'input-row'}, [thresholdLabel, thresholdRange, thresholdInput]),
+
+                    ditherInput = createElement('input', {id: 'dither-'+i, value: ".80", type: 'number'}),
+                    ditherRange = createElement('input', {type: 'range', min: 0, max: 1.1, step: .01, value: .8}),
+                    ditherLabel = createElement('label', {htmlFor: 'dither-'+i, innerHTML: 'Spalvos korekcija ' + (i+1) + ': '}),
+                    ditherRow = createElement('div', {className: 'input-row'}, [ditherLabel, ditherRange, ditherInput]),
+
+                    button = createElement('button', {innerHTML: 'Atsiusti faila '+(i+1)+' Gcode'}),
+                    buttonRow = createElement('div', {className: ''}, [button]),
+
+                    allRows = [colorRow, thresholdRow, ditherRow, buttonRow];
+
+                picker.fromRGB(color[0]*255, color[1]*255, color[2]*255);
+
+                function updateColor() {
+                    color[0] = picker.rgb[0]/255;
+                    color[1] = picker.rgb[1]/255;
+                    color[2] = picker.rgb[2]/255;
+                    color[3] = parseFloat(thresholdInput.value);
+                    color[4] = parseFloat(ditherInput.value);
+
+                    renderAndGenerate();
+                }
+
+                colorInput.addEventListener('change', updateColor);
+                thresholdInput.addEventListener('change', updateColor);
+                ditherInput.addEventListener('change', updateColor);
+
+                thresholdRange.addEventListener('input', function () {thresholdInput.value=thresholdRange.value; updateColor();});
+                ditherRange.addEventListener('input', function () {ditherInput.value=ditherRange.value; updateColor();});
+
+                button.addEventListener('click', function () {downloadGcode(i);});
+
+                allRows.forEach(function (row) {
+                    colorsBox.appendChild(row);
+                });
+                colorControls.push(allRows);
+            }
+
+            function updateUI() {
+                printWidthInput.value = printWidth.toFixed(2);
+                printHeightInput.value = printHeight.toFixed(2);
+
+                offsetXInput.value = offsetX.toFixed(2);
+                offsetYInput.value = offsetY.toFixed(2);
+
+                zUpInput.value = zUp.toFixed(2);
+                zDownInput.value = zDown.toFixed(2);
+
+                feedrateInput.value = Math.floor(feedrate);
+
+                dotGapInput.value = dotGap.toFixed(2);
+                colorCountInput.value = colorCount;
+
+                startGcodeTextarea.value = startingGcode;
+
+                while (colorControls.length < targetColors.length) {
+                    addColorControl();
+                }
+                while (targetColors.length < colorControls.length) {
+                    colorControls.pop().forEach(function (row) {
+                        colorsBox.removeChild(row);
+                    });
+                }
+            }
+
+            function takeInput() {
+                if (printWidthInput.value != parseFloat(printWidth)) {
+                    printWidth = parseFloat(printWidthInput.value);
+                    scaleToWidth();
+                }
+                else if (printHeightInput.value != parseFloat(printHeight)) {
+                    printHeight = parseFloat(printHeightInput.value);
+                    scaleToHeight();
+                }
+                else if (dotGap != parseFloat(dotGapInput.value)) {
+                    dotGap = parseFloat(dotGapInput.value);
+                    scaleToWidth(); // or scaleToHeight(), shouldn't matter which because only dotGap changed
+                }
+
+                offsetX = parseFloat(offsetXInput.value);
+                offsetY = parseFloat(offsetYInput.value);
+                zUp = parseFloat(zUpInput.value);
+                zDown = parseFloat(zDownInput.value);
+                feedrate = parseInt(feedrateInput.value);
+                colorCount = parseInt(colorCountInput.value);
+
+                while (targetColors.length < colorCount) {
+                    targetColors.push([0,0,0,.5,.8]);
+                }
+
+                targetColors = targetColors.slice(0, colorCount);
+
+                startingGcode = startGcodeTextarea.value;
+                if (startingGcode.slice(-1) != '\n') {
+                    startingGcode += '\n';
+                }
+
+                updateUI();
+                renderAndGenerate();
+            }
+
+            function scaleToWidth() {
+                dotWidth = Math.round(printWidth / dotGap);
+
+                scale = dotWidth / width;
+
+                dotHeight = Math.round(height * scale);
+
+                printHeight = dotHeight * dotGap
+            }
+            
+            function scaleToHeight() {
+                dotHeight = Math.round(printHeight / dotGap);
+
+                scale = dotHeight / height;
+
+                dotWidth = Math.round(width * scale);
+
+                printWidth = dotWidth * dotGap;
+            }
+
+            function resizeWithDotGap() {
+                printWidth = dotWidth * dotGap;
+                printHeight = dotHeight * dotGap;
+            }
+
+            function initialScaleImage() {
+                width = image.width;
+                height = image.height;
+                scale = 1;
+
+                if (width >= height) {
+                    printWidth = 150;
+                    scaleToWidth();
+                }
+                else {
+                    printHeight = 150;
+                    scaleToHeight();
+                }
+            }
+
+            function renderAndGenerate() {
+                var x, y, rgb, d,
+                    nearestDistance, nearestColor,
+                    mx, my;
+
+                if (!image) {
+                    return;
+                }
+
+                targetColors.forEach(function (color) {
+                    color[5] = startingGcode;
+                });
+
+                dotWidth = Math.ceil(width * scale);
+                dotHeight = Math.ceil(height * scale);
+
+                canvas.width = dotWidth;
+                canvas.height = dotHeight;
+
+                context.drawImage(image, 0, 0, dotWidth, dotHeight);
+                data = context.getImageData(0, 0, dotWidth, dotHeight).data;
+                imageA.src = canvas.toDataURL();
+
+                context.clearRect(0, 0, dotWidth, dotHeight);
+
+                for (x = 0; x < dotWidth; x ++) {
+                    for (y = 0; y < dotHeight; y ++) {
+                        rgb = [
+                                data[((x+(y*dotWidth))*4)+0] / 255,
+                                data[((x+(y*dotWidth))*4)+1] / 255,
+                                data[((x+(y*dotWidth))*4)+2] / 255
+                            ];
+
+                        nearestDistance = undefined;
+                        nearestColor = undefined;
+
+                        targetColors.forEach(function (color) {
+                            d = Math.abs(calculateDistance(color, rgb));
+
+                            d += (ditherPattern[y%8][x%8] - .5) * color[4];
+
+                            if (data[((x+(y*dotWidth))*4)+3] / 255 > .5) {
+                                if (d < color[3]) {
+                                    if (nearestDistance == undefined || d < nearestDistance) {
+                                        nearestDistance = d;
+                                        nearestColor = color;
+                                    }
+                                }
+                            }
+                        });
+
+                        if (nearestColor) {
+                            context.fillStyle = colorToString(nearestColor);
+                            context.fillRect(x, y, 1, 1);
+
+                            mx = x * dotGap + offsetX;
+                            my = (dotHeight-y) * dotGap + offsetY;
+
+                            nearestColor[5] += 'G0 X'+mx.toFixed(3)+' Y'+my.toFixed(3)+' Z'+zUp.toFixed(2)+' F'+feedrate+'\n';
+                            nearestColor[5] += 'G0 Z'+zDown.toFixed(2)+' F10000\n';
+                            nearestColor[5] += 'G0 Z'+zUp.toFixed(2)+' F10000\n';
+                        }
+                    }
+                }
+
+                imageB.src = canvas.toDataURL();
+
+                setTimeout(function () {
+                    controlsBox.style.paddingTop = imageBox.offsetHeight + 30;
+                }, 100);
+            }
+        
+            function downloadGcode(i) {
+                download(targetColors[i][5], 'color' + (i+1) + '-' + (Date.now()) + '.gcode', 'text/plain');
+            }
+
+            function beginWithFile() {
+                var URL = window.URL || window.webkitURL,
+                    file = this.files[0],
+                    type = file.type,
+                    fileURL = URL.createObjectURL(file),
+                    loaded = false;
+
+                if (type.indexOf('image') == 0) {
+                    image = new Image();
+
+                    image.src = fileURL;
+
+                    image.onload = function () {
+                        loaded = true;
+                        titleBox.style.display = 'none';
+                        imageBox.style.display = 'flex';
+                        initialScaleImage();
+                        updateUI();
+                        renderAndGenerate();
+                    };
+
+                    setTimeout(function () {
+                        if (!loaded) {
+                            alert('This image type doesn\'t seem to be supported by your browser.\nTry another format.');
+                        }
+                    }, 15000);
+                }
+                else {
+                    alert('This file is not an image ??');
+                }
+            }
+
+            window.onload = function () {
+                imageA = document.getElementById('image-a');
+                imageB = document.getElementById('image-b');
+
+                canvas = document.createElement('canvas');
+                context = canvas.getContext('2d');
+
+                titleBox = document.getElementById('title-box');
+                imageBox = document.getElementById('image-box');
+                controlsBox = document.getElementById('controls-box');
+                fileInput = document.getElementById('file-input');
+
+                printWidthInput = document.getElementById('print-width-input');
+                printHeightInput = document.getElementById('print-height-input');
+
+                offsetXInput = document.getElementById('offset-x-input');
+                offsetYInput = document.getElementById('offset-y-input');
+                zUpInput = document.getElementById('z-up-input');
+                zDownInput = document.getElementById('z-down-input');
+                feedrateInput = document.getElementById('feedrate-input');
+
+                dotGapInput = document.getElementById('dot-gap-input');
+                colorCountInput = document.getElementById('color-count-input');
+                colorsBox = document.getElementById('colors-box');
+                startGcodeTextarea = document.getElementById('start-gcode-textarea');
+
+                fileInput.addEventListener('change', beginWithFile, false);
+                printWidthInput.addEventListener('change', takeInput);
+                printHeightInput.addEventListener('change', takeInput);
+                offsetXInput.addEventListener('change', takeInput);
+                offsetYInput.addEventListener('change', takeInput);
+                dotGapInput.addEventListener('change', takeInput);
+                colorCountInput.addEventListener('change', takeInput);
+                startGcodeTextarea.addEventListener('change', takeInput);
+
+                updateUI();
+            };
+        </script>
+    </head>
+    <body>
+        <div id="title-box">
+            <h1>Foto konvertavimas<span class="version"></span></h1>
+            <h2></h2>
+            <br />
+            <label for="file-input"></label>
+            <input id="file-input" type="file" />
+        </div>
+        <div id="image-box">
+            <img id="image-a" /><img id="image-b" />
+        </div>
+        <div id="controls-wrapper">
+            <div id="controls-box">
+                <div class="input-row">
+                    <label for="dot-gap-input">Dydis (mm): </label>
+                    <span>
+                        <input type="number" id="print-width-input" class="small" />
+                        *
+                        <input type="number" id="print-height-input" class="small" />
+                    </span>
+                </div>
+                <div class="input-row">
+                    <label for="dot-gap-input">Pradzios kordinates (mm): </label>
+                    <span>
+                        x <input type="number" id="offset-x-input" class="small" />
+                        y <input type="number" id="offset-y-input" class="small" />
+                    </span>
+                </div>
+                <div class="input-row">
+                    <label for="dot-gap-input">Z Asis (mm): </label>
+                    <span>
+                        Pakila <input type="number" id="z-up-input" class="small" />
+                        Leidziasi <input type="number" id="z-down-input" class="small" />
+                    </span>
+                </div>
+                <div class="input-row">
+                    <label for="feedrate-input">Greitis (mm/s): </label>
+                    <span>
+                        <input type="number" id="feedrate-input" />
+                    </span>
+                </div>
+                <div class="input-row">
+                    <label for="dot-gap-input">Taskai (mm): </label>
+                    <input type="number" id="dot-gap-input" />
+                </div>
+                <div class="input-row">
+                    <label for="color-count-input">Spalvu kiekis: </label>
+                    <input type="number" id="color-count-input" min="1" />
+                </div>
+                <div id="colors-box">
+                </div>
+                <div class="input-row bottom">
+                    <label for="start-gcode-textarea">Gcode pradzia: </label>
+                    <br />
+                    <textarea id="start-gcode-textarea"></textarea>
+                </div>
+            </div>
+        </div>
+           </body>
+</html>

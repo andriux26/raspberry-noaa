@@ -1,0 +1,53 @@
+
+<?php
+
+// Set log file path
+$logfile = '/var/log/raspberry-noaa-v2/output.log';
+
+// Check if file exists
+if(file_exists($logfile)){
+
+  // Open file
+  $handle = fopen($logfile, 'r');
+
+  // Get last 500 lines
+  $contents = tail($handle, 500);
+
+  // Close file
+  fclose($handle);
+
+  // Display contents
+  echo '<pre>';
+  echo nl2br($contents);
+  echo '</pre>';
+
+} else {
+  
+  // File doesn't exist
+  echo 'Log file not found'; 
+
+}
+
+// Function to get last N lines from file 
+function tail($handle, $lines = 1) {
+  $buffer = '';
+  
+  // Seek to end of file
+  fseek($handle, -1, SEEK_END);
+  
+  // Read it and adjust line number if necessary
+  // (Otherwise the result would be wrong if file doesn't end with a blank line)
+  if (fread($handle, 1) != "\n") $lines -= 1;
+  
+  // Start reading
+  while ($lines >= 0) {
+    // Jump back from current position from end minus one more line
+    // Then read that line
+    fseek($handle, -$lines--, SEEK_CUR);
+    $buffer = fgets($handle) . $buffer; 
+  }
+
+  return $buffer;
+}
+
+?>

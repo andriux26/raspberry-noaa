@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <style>
+        </style>
+        <script>
+            window.addEventListener('load', function () {
+            var mouseDown = false,
+                canvas = document.createElement('canvas'),
+                context = canvas.getContext('2d'),
+                lastX = 0,
+                lastY = 0;
+
+                canvas.width = 300;
+                canvas.height = 300;
+
+                function drawLine(event) {
+                    var x = event.pageX % 300,
+                        y = event.pageY % 300;
+
+                    /*context.moveTo(lastX, lastY);
+                    context.lineTo(x, y);
+                    context.stroke();*/
+
+                    context.fillRect(x, y, 2, 2);
+
+                    lastX = x;
+                    lastY = y;
+
+                    document.body.style.backgroundImage = 'url('+canvas.toDataURL()+')';
+                }
+
+                document.addEventListener('mousedown', function (event) {
+                    var x = event.pageX % 300,
+                        y = event.pageY % 300;
+
+                    event.preventDefault();
+
+                    mouseDown = true;
+
+                    lastX = x;
+                    lastY = y;
+                });
+                document.addEventListener('mouseup', function (event) {
+                    event.preventDefault();
+
+                    if (mouseDown) {
+                        drawLine(event);
+                    }
+
+                    mouseDown = false;
+                });
+                document.addEventListener('mousemove', function (event) {
+                    event.preventDefault();
+
+                    if (mouseDown) {
+                        drawLine(event);
+                    }
+                });
+                document.getElementById('save-button').addEventListener('click', function () {
+                    var a = document.createElement('a');
+
+                    a.href = canvas.toDataURL();
+                    a.download = 'pattern-'+Date.now();
+
+                    a.click();
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <button id="save-button">save</button>
+    </body>
+</html>

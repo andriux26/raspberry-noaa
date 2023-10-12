@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rsp stat="ok">
+<list>
+   <widget id="OTTPlayer">
+       <title>OTTPlayer</title>
+       <compression size="35240" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/OTTPlayer.zip</download>
+   </widget>
+   <widget id="Smartoneosray">
+       <title>Smartoneosray</title>
+       <compression size="59240" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/Smartoneosray.zip</download>
+   </widget>
+<widget id="SmartIPTVgeras">
+       <title>SmartIPTVgeras</title>
+       <compression size="92921" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/SmartIPTVgeras.zip</download>
+   </widget>
+<widget id="nStreamLmod">
+       <title>nStreamLmod</title>
+       <compression size="509900" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/nStreamLmod.zip</download>
+   </widget>
+<widget id="fork">
+       <title>fork</title>
+       <compression size="4613596" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/fork.zip</download>
+   </widget>
+<widget id="sFork">
+       <title>sFork</title>
+       <compression size="4613596" type="zip"/>
+       <description></description>
+       <download>http://192.168.1.117/Widget/sFork.zip</download>
+   </widget>
+
+</list>
+</rsp>
